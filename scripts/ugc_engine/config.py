@@ -3,7 +3,7 @@ import os
 SHOPIFY_STORE = os.environ.get("SHOPIFY_STORE", "pupper.myshopify.com")
 SHOPIFY_TOKEN = os.environ.get("SHOPIFY_TOKEN", "")
 
-ANTHROPIC_API_KEY = os.environ["ANTHROPIC_API_KEY"]
+ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
 RESEND_API_KEY = os.environ.get("RESEND_API_KEY", "")
 BILLO_API_KEY = os.environ.get("BILLO_API_KEY", "")
 
