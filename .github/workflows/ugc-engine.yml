@@ -1,0 +1,66 @@
+name: Pupper UGC Engine
+
+on:
+  schedule:
+    # Brief creators Mon, Wed, Fri at 10am ET (3 videos/week)
+    - cron: "0 15 * * 1,3,5"
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "brief (generate + send to Billo) or post (post approved video)"
+        required: true
+        default: "brief"
+        type: choice
+        options: [brief, post]
+      video_url:
+        description: "Approved video URL (post mode only)"
+        required: false
+        default: ""
+      product_handle:
+        description: "Product handle (post mode only)"
+        required: false
+        default: ""
+      caption:
+        description: "Override caption (post mode, optional)"
+        required: false
+        default: ""
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Run UGC engine
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          SHOPIFY_TOKEN: ${{ secrets.SHOPIFY_TOKEN }}
+          SHOPIFY_STORE: pupper.myshopify.com
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          BILLO_API_KEY: ${{ secrets.BILLO_API_KEY }}
+          META_PAGE_ACCESS_TOKEN: ${{ secrets.META_PAGE_ACCESS_TOKEN }}
+          META_PAGE_ID: ${{ secrets.META_PAGE_ID }}
+          INSTAGRAM_ACCOUNT_ID: ${{ secrets.INSTAGRAM_ACCOUNT_ID }}
+          TIKTOK_ACCESS_TOKEN: ${{ secrets.TIKTOK_ACCESS_TOKEN }}
+          TWITTER_API_KEY: ${{ secrets.TWITTER_API_KEY }}
+          TWITTER_API_SECRET: ${{ secrets.TWITTER_API_SECRET }}
+          TWITTER_ACCESS_TOKEN: ${{ secrets.TWITTER_ACCESS_TOKEN }}
+          TWITTER_ACCESS_SECRET: ${{ secrets.TWITTER_ACCESS_SECRET }}
+          VIDEOS_PER_WEEK: "3"
+        run: |
+          MODE="${{ github.event.inputs.mode || 'brief' }}"
+          if [ "$MODE" = "post" ]; then
+            python -m ugc_engine.main post \
+              --video-url "${{ github.event.inputs.video_url }}" \
+              --product-handle "${{ github.event.inputs.product_handle }}" \
+              --caption "${{ github.event.inputs.caption }}"
+          else
+            python -m ugc_engine.main brief
+          fi
+        working-directory: scripts
