@@ -10,7 +10,7 @@ import urllib.request
 from datetime import datetime
 
 GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN", "")
-GITHUB_REPO = "ajagrawal452/pupper"
+GITHUB_REPO = "aagrawal2424/pupper"
 QUEUE_FILE = "video_queue.json"
 QUEUE_API = f"https://api.github.com/repos/{GITHUB_REPO}/contents/{QUEUE_FILE}"
 
