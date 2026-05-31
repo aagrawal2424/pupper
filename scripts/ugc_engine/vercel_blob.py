@@ -13,7 +13,7 @@ def upload(filename: str, data: bytes, content_type: str = "audio/mpeg") -> str:
         data=data,
         headers={
             "Authorization": f"Bearer {config.VERCEL_BLOB_TOKEN}",
-            "x-content-type": content_type,
+            "Content-Type": content_type,
             "x-add-random-suffix": "1",
         },
         method="PUT",
