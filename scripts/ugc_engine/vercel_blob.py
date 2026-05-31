@@ -18,5 +18,9 @@ def upload(filename: str, data: bytes, content_type: str = "audio/mpeg") -> str:
         },
         method="PUT",
     )
-    with urllib.request.urlopen(req) as r:
-        return json.loads(r.read())["url"]
+    try:
+        with urllib.request.urlopen(req) as r:
+            return json.loads(r.read())["url"]
+    except urllib.error.HTTPError as e:
+        body = e.read().decode()
+        raise RuntimeError(f"Vercel Blob {e.code}: {body}")
