@@ -105,7 +105,6 @@ def _audio_clip(src: str, length: float, volume: float = 1.0) -> dict:
 
 def generate_tip_video(headline: str, subtext: str, dog_video_url: str) -> str:
     timeline = {
-        "soundtrack": {"src": MUSIC_URL, "effect": "fadeInFadeOut", "volume": 0.15},
         "tracks": [
             {"clips": [_bg_clip(dog_video_url, 10)]},
             {"clips": [
@@ -119,7 +118,6 @@ def generate_tip_video(headline: str, subtext: str, dog_video_url: str) -> str:
 
 def generate_product_video(product_title: str, benefit: str, product_img_url: str, dog_video_url: str) -> str:
     timeline = {
-        "soundtrack": {"src": MUSIC_URL, "effect": "fadeInFadeOut", "volume": 0.15},
         "tracks": [
             {"clips": [_bg_clip(dog_video_url, 12, effect="slideLeft", filter_="muted")]},
             {"clips": [{
@@ -144,7 +142,6 @@ def generate_voiceover_tip_video(tip: dict, audio_url: str, dog_video_url: str) 
     """Narrated dog health tip — ElevenLabs voiceover over Pexels footage with text sync."""
     duration = 21.0
     timeline = {
-        "soundtrack": {"src": MUSIC_URL, "effect": "fadeInFadeOut", "volume": 0.05},
         "tracks": [
             # Background video
             {"clips": [_bg_clip(dog_video_url, duration, effect="zoomIn", filter_="contrast")]},
@@ -171,7 +168,6 @@ def generate_product_story_video(product_title: str, benefit: str, product_img_u
     """Product deep-dive with ElevenLabs narration, product image, and dog footage."""
     duration = 22.0
     timeline = {
-        "soundtrack": {"src": MUSIC_URL, "effect": "fadeInFadeOut", "volume": 0.05},
         "tracks": [
             {"clips": [_bg_clip(dog_video_url, duration, effect="slideLeft", filter_="muted")]},
             # Product image — slides in and holds center stage
@@ -214,7 +210,6 @@ def generate_relatable_reel(moment: dict, dog_video_url: str) -> str:
         )
 
     timeline = {
-        "soundtrack": {"src": UPBEAT_URL, "effect": "fadeInFadeOut", "volume": 0.4},
         "tracks": [
             {"clips": [_bg_clip(dog_video_url, duration, effect="zoomIn", filter_="contrast")]},
             {"clips": text_clips},
@@ -227,7 +222,6 @@ def generate_ingredient_spotlight_video(ingredient: dict, audio_url: str, dog_vi
     """Hero ingredient education — name reveal, benefit, science fact, CTA, with narration."""
     duration = 22.0
     timeline = {
-        "soundtrack": {"src": MUSIC_URL, "effect": "fadeInFadeOut", "volume": 0.05},
         "tracks": [
             {"clips": [_bg_clip(dog_video_url, duration, effect="zoomIn", filter_="muted")]},
             {"clips": [
@@ -259,7 +253,6 @@ def generate_social_proof_video(quote: str, product_title: str,
     """Animated customer review with dog footage and voiceover."""
     duration = 17.0
     timeline = {
-        "soundtrack": {"src": MUSIC_URL, "effect": "fadeInFadeOut", "volume": 0.05},
         "tracks": [
             {"clips": [_bg_clip(dog_video_url, duration, effect="zoomIn", filter_="muted")]},
             {"clips": [
