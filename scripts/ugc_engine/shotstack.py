@@ -76,7 +76,7 @@ def _bg_clip(src: str, length: float, effect: str = "zoomIn", filter_: str = "co
 def _text_clip(text: str, start: float, length: float, style: str = "chunk",
                size: str = "large", color: str = "#ffffff",
                bg: str = "#000000", position: str = "center",
-               transition_in: str = "fadeIn", transition_out: str = "fadeOut") -> dict:
+               transition_in: str = "fade", transition_out: str = "fade") -> dict:
     return {
         "asset": {
             "type": "title",
@@ -126,7 +126,7 @@ def generate_product_video(product_title: str, benefit: str, product_img_url: st
                 "asset": {"type": "image", "src": product_img_url},
                 "start": 1, "length": 10,
                 "position": "center", "scale": 0.55,
-                "transition": {"in": "slideUp", "out": "fadeOut"},
+                "transition": {"in": "slideUp", "out": "fade"},
             }]},
             {"clips": [
                 _text_clip(product_title, 1.5, 10, size="large", position="top"),
@@ -151,13 +151,13 @@ def generate_voiceover_tip_video(tip: dict, audio_url: str, dog_video_url: str) 
             # Text overlays synced to narration pacing
             {"clips": [
                 _text_clip(tip["hook"], 0.5, 6.0, style="chunk", size="x-large",
-                           position="center", transition_in="fadeIn", transition_out="fadeOut"),
+                           position="center", transition_in="fade", transition_out="fade"),
                 _text_clip(tip["body"], 6.5, 11.0, style="subtitle", size="small",
                            color="#ffffff", bg="rgba(0,0,0,0.75)", position="bottom",
-                           transition_in="fadeIn", transition_out="fadeOut"),
+                           transition_in="fade", transition_out="fade"),
                 _text_clip("pupper.com 🐾", 18.5, 2.0, style="chunk", size="medium",
                            bg="rgba(0,0,0,0.9)", position="center",
-                           transition_in="fadeIn", transition_out="fadeOut"),
+                           transition_in="fade", transition_out="fade"),
             ]},
             # Voiceover audio
             {"clips": [_audio_clip(audio_url, duration)]},
@@ -179,17 +179,17 @@ def generate_product_story_video(product_title: str, benefit: str, product_img_u
                 "asset": {"type": "image", "src": product_img_url},
                 "start": 4.0, "length": 14.0,
                 "position": "center", "scale": 0.5,
-                "transition": {"in": "slideUp", "out": "fadeOut"},
+                "transition": {"in": "slideUp", "out": "fade"},
             }]},
             {"clips": [
                 _text_clip(product_title, 0.5, 5.0, style="chunk", size="x-large",
-                           position="center", transition_in="fadeIn"),
+                           position="center", transition_in="fade"),
                 _text_clip(benefit, 4.5, 13.0, style="subtitle", size="small",
                            color="#ffffff", bg="rgba(0,0,0,0.8)", position="bottom",
-                           transition_in="fadeIn", transition_out="fadeOut"),
+                           transition_in="fade", transition_out="fade"),
                 _text_clip("Link in bio 🐾  pupper.com", 19.0, 2.5, style="chunk",
                            size="medium", bg="rgba(0,0,0,0.9)", position="center",
-                           transition_in="fadeIn", transition_out="fadeOut"),
+                           transition_in="fade", transition_out="fade"),
             ]},
             {"clips": [_audio_clip(audio_url, duration)]},
         ],
@@ -210,7 +210,7 @@ def generate_relatable_reel(moment: dict, dog_video_url: str) -> str:
         text_clips.append(
             _text_clip(line, start, length, style="chunk", size="large",
                        color="#ffffff", bg="rgba(0,0,0,0.85)", position="center",
-                       transition_in="fadeIn", transition_out="fadeOut")
+                       transition_in="fade", transition_out="fade")
         )
 
     timeline = {
@@ -234,19 +234,19 @@ def generate_ingredient_spotlight_video(ingredient: dict, audio_url: str, dog_vi
                 # Big ingredient name reveal
                 _text_clip(ingredient["name"], 0.5, 5.0, style="chunk", size="x-large",
                            color="#ffffff", bg="#000000", position="center",
-                           transition_in="fadeIn", transition_out="fadeOut"),
+                           transition_in="fade", transition_out="fade"),
                 # Benefit
                 _text_clip(ingredient["benefit"], 5.5, 6.0, style="chunk", size="medium",
                            color="#ffffff", bg="rgba(0,0,0,0.8)", position="center",
-                           transition_in="fadeIn", transition_out="fadeOut"),
+                           transition_in="fade", transition_out="fade"),
                 # Science fact
                 _text_clip(f"🔬 {ingredient['fact']}", 11.5, 6.5, style="subtitle", size="small",
                            color="#ffffff", bg="rgba(0,0,0,0.85)", position="bottom",
-                           transition_in="fadeIn", transition_out="fadeOut"),
+                           transition_in="fade", transition_out="fade"),
                 # CTA
                 _text_clip(ingredient["cta"], 18.5, 3.0, style="chunk", size="small",
                            color="#ffffff", bg="#000000", position="center",
-                           transition_in="fadeIn", transition_out="fadeOut"),
+                           transition_in="fade", transition_out="fade"),
             ]},
             {"clips": [_audio_clip(audio_url, duration)]},
         ],
@@ -265,13 +265,13 @@ def generate_social_proof_video(quote: str, product_title: str,
             {"clips": [
                 _text_clip("Real dog owners. Real results. 🐾", 0.5, 4.0,
                            style="chunk", size="large", bg="#000000", position="center",
-                           transition_in="fadeIn", transition_out="fadeOut"),
+                           transition_in="fade", transition_out="fade"),
                 _text_clip(f'"{quote}"', 4.5, 9.0, style="subtitle", size="small",
                            color="#ffffff", bg="rgba(0,0,0,0.85)", position="center",
-                           transition_in="fadeIn", transition_out="fadeOut"),
+                           transition_in="fade", transition_out="fade"),
                 _text_clip(f"{product_title}\npupper.com 🐾", 14.0, 2.5,
                            style="chunk", size="medium", bg="#000000", position="center",
-                           transition_in="fadeIn", transition_out="fadeOut"),
+                           transition_in="fade", transition_out="fade"),
             ]},
             {"clips": [_audio_clip(audio_url, duration)]},
         ],
