@@ -1,27 +1,18 @@
-"""Temporary public audio hosting via file.io — no setup required."""
-import json
+"""Temporary public audio hosting via transfer.sh — works from CI/CD environments."""
 import urllib.request
 
 
 def upload(filename: str, data: bytes, content_type: str = "audio/mpeg") -> str:
-    """Upload audio bytes, return a public URL valid for 30 minutes."""
-    boundary = "pupper_audio_boundary"
-    body = (
-        f"--{boundary}\r\n"
-        f'Content-Disposition: form-data; name="file"; filename="{filename}"\r\n'
-        f"Content-Type: {content_type}\r\n\r\n"
-    ).encode() + data + f"\r\n--{boundary}--\r\n".encode()
-
+    """Upload audio bytes, return a public URL valid for 1 day."""
     req = urllib.request.Request(
-        "https://file.io/?expires=30m&maxdownloads=10",
-        data=body,
-        headers={"Content-Type": f"multipart/form-data; boundary={boundary}"},
-        method="POST",
+        f"https://transfer.sh/{filename}",
+        data=data,
+        headers={
+            "Content-Type": content_type,
+            "Max-Downloads": "20",
+            "Max-Days": "1",
+        },
+        method="PUT",
     )
     with urllib.request.urlopen(req) as r:
-        result = json.loads(r.read())
-
-    if not result.get("success"):
-        raise RuntimeError(f"file.io upload failed: {result}")
-
-    return result["link"]
+        return r.read().decode().strip()
