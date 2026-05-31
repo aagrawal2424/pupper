@@ -19,7 +19,7 @@ def get_video_url(query: str = None) -> str:
     q = query or random.choice(QUERIES)
     params = urllib.parse.urlencode({"query": q, "orientation": "portrait", "per_page": 15, "size": "medium"})
     req = urllib.request.Request(
-        f"https://api.pexels.com/videos/search?{params}",
+        f"https://api.pexels.com/v1/videos/search?{params}",
         headers={"Authorization": PEXELS_KEY},
     )
     with urllib.request.urlopen(req) as r:
