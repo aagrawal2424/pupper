@@ -12,9 +12,18 @@ QUERIES = [
 ]
 
 
+# Fallback vertical dog videos from Pexels (pre-fetched, always work)
+FALLBACK_VIDEOS = [
+    "https://videos.pexels.com/video-files/4498037/4498037-uhd_1440_2732_25fps.mp4",
+    "https://videos.pexels.com/video-files/4681821/4681821-uhd_1440_2732_25fps.mp4",
+    "https://videos.pexels.com/video-files/5732526/5732526-hd_1080_1920_25fps.mp4",
+]
+
+
 def get_video_url(query: str = None) -> str:
     if not PEXELS_KEY:
-        raise RuntimeError("PEXELS_API_KEY not set")
+        print(f"  Pexels: no API key — using fallback video")
+        return random.choice(FALLBACK_VIDEOS)
 
     q = query or random.choice(QUERIES)
     params = urllib.parse.urlencode({"query": q, "orientation": "portrait", "per_page": 15, "size": "medium"})
@@ -22,15 +31,19 @@ def get_video_url(query: str = None) -> str:
         f"https://api.pexels.com/v1/videos/search?{params}",
         headers={"Authorization": PEXELS_KEY},
     )
-    with urllib.request.urlopen(req) as r:
-        data = json.loads(r.read())
+    try:
+        with urllib.request.urlopen(req) as r:
+            data = json.loads(r.read())
+    except Exception as e:
+        print(f"  Pexels error ({e}) — using fallback video")
+        return random.choice(FALLBACK_VIDEOS)
 
     videos = data.get("videos", [])
     if not videos:
-        raise RuntimeError(f"No Pexels videos found for: {q}")
+        print(f"  Pexels: no results for '{q}' — using fallback video")
+        return random.choice(FALLBACK_VIDEOS)
 
     video = random.choice(videos)
-    # Pick highest quality portrait file
     files = sorted(
         [f for f in video["video_files"] if f.get("height", 0) >= 1080],
         key=lambda f: f.get("height", 0), reverse=True
