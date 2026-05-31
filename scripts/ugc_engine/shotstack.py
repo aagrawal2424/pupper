@@ -15,7 +15,6 @@ OUTPUT_BASE = {
     "resolution": "sd",
     "aspectRatio": "9:16",
     "fps": 30,
-    "background": "#111111",
 }
 
 MUSIC_URL = "https://shotstack-assets.s3.ap-southeast-2.amazonaws.com/music/freepd/music.mp3"
@@ -94,6 +93,21 @@ def _text_clip(text: str, start: float, length: float, style: str = "chunk",
     }
 
 
+def _dark_bg(length: float) -> dict:
+    return {
+        "asset": {
+            "type": "html",
+            "html": "<body></body>",
+            "css": "body { background: #111111; margin: 0; padding: 0; }",
+            "width": 1080,
+            "height": 1920,
+        },
+        "start": 0,
+        "length": length,
+        "position": "center",
+    }
+
+
 def _audio_clip(src: str, length: float, volume: float = 1.0) -> dict:
     return {
         "asset": {"type": "audio", "src": src, "volume": volume},
@@ -144,6 +158,7 @@ def generate_voiceover_tip_video(tip: dict, audio_url: str, dog_video_url: str) 
     duration = 21.0
     timeline = {
         "tracks": [
+            {"clips": [_dark_bg(duration)]},
             {"clips": [
                 _text_clip(tip["hook"], 0.5, 6.0, style="chunk", size="x-large",
                            position="center", transition_in="fade", transition_out="fade"),
@@ -167,6 +182,7 @@ def generate_product_story_video(product_title: str, benefit: str, product_img_u
     duration = 22.0
     timeline = {
         "tracks": [
+            {"clips": [_dark_bg(duration)]},
             # Product image — slides in and holds center stage
             {"clips": [{
                 "asset": {"type": "image", "src": product_img_url},
@@ -206,7 +222,7 @@ def generate_relatable_reel(moment: dict, dog_video_url: str) -> str:
                        transition_in="fade", transition_out="fade")
         )
 
-    timeline = {"tracks": [{"clips": text_clips}]}
+    timeline = {"tracks": [{"clips": [_dark_bg(duration)]}, {"clips": text_clips}]}
     return _render(timeline)
 
 
@@ -215,6 +231,7 @@ def generate_ingredient_spotlight_video(ingredient: dict, audio_url: str, dog_vi
     duration = 22.0
     timeline = {
         "tracks": [
+            {"clips": [_dark_bg(duration)]},
             {"clips": [
                 # Big ingredient name reveal
                 _text_clip(ingredient["name"], 0.5, 5.0, style="chunk", size="x-large",
@@ -245,6 +262,7 @@ def generate_social_proof_video(quote: str, product_title: str,
     duration = 17.0
     timeline = {
         "tracks": [
+            {"clips": [_dark_bg(duration)]},
             {"clips": [
                 _text_clip("Real dog owners. Real results. 🐾", 0.5, 4.0,
                            style="chunk", size="large", bg="#000000", position="center",
