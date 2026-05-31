@@ -15,6 +15,7 @@ OUTPUT_BASE = {
     "resolution": "sd",
     "aspectRatio": "9:16",
     "fps": 30,
+    "background": "#111111",
 }
 
 MUSIC_URL = "https://shotstack-assets.s3.ap-southeast-2.amazonaws.com/music/freepd/music.mp3"
@@ -139,13 +140,10 @@ def generate_product_video(product_title: str, benefit: str, product_img_url: st
 # ── New templates ──────────────────────────────────────────────────────────────
 
 def generate_voiceover_tip_video(tip: dict, audio_url: str, dog_video_url: str) -> str:
-    """Narrated dog health tip — ElevenLabs voiceover over Pexels footage with text sync."""
+    """Narrated dog health tip — ElevenLabs voiceover with text on dark background."""
     duration = 21.0
     timeline = {
         "tracks": [
-            # Background video
-            {"clips": [_bg_clip(dog_video_url, duration, effect="zoomIn", filter_="contrast")]},
-            # Text overlays synced to narration pacing
             {"clips": [
                 _text_clip(tip["hook"], 0.5, 6.0, style="chunk", size="x-large",
                            position="center", transition_in="fade", transition_out="fade"),
@@ -165,11 +163,10 @@ def generate_voiceover_tip_video(tip: dict, audio_url: str, dog_video_url: str) 
 
 def generate_product_story_video(product_title: str, benefit: str, product_img_url: str,
                                   audio_url: str, dog_video_url: str) -> str:
-    """Product deep-dive with ElevenLabs narration, product image, and dog footage."""
+    """Product deep-dive with ElevenLabs narration and product image on dark background."""
     duration = 22.0
     timeline = {
         "tracks": [
-            {"clips": [_bg_clip(dog_video_url, duration, effect="slideLeft", filter_="muted")]},
             # Product image — slides in and holds center stage
             {"clips": [{
                 "asset": {"type": "image", "src": product_img_url},
@@ -194,7 +191,7 @@ def generate_product_story_video(product_title: str, benefit: str, product_img_u
 
 
 def generate_relatable_reel(moment: dict, dog_video_url: str) -> str:
-    """Text-on-screen relatable dog parent moment — no voiceover, upbeat music."""
+    """Text-on-screen relatable dog parent moment — text on dark background."""
     lines = moment["lines"]
     duration = 13.0
     segment = duration / len(lines)
@@ -209,12 +206,7 @@ def generate_relatable_reel(moment: dict, dog_video_url: str) -> str:
                        transition_in="fade", transition_out="fade")
         )
 
-    timeline = {
-        "tracks": [
-            {"clips": [_bg_clip(dog_video_url, duration, effect="zoomIn", filter_="contrast")]},
-            {"clips": text_clips},
-        ],
-    }
+    timeline = {"tracks": [{"clips": text_clips}]}
     return _render(timeline)
 
 
@@ -223,7 +215,6 @@ def generate_ingredient_spotlight_video(ingredient: dict, audio_url: str, dog_vi
     duration = 22.0
     timeline = {
         "tracks": [
-            {"clips": [_bg_clip(dog_video_url, duration, effect="zoomIn", filter_="muted")]},
             {"clips": [
                 # Big ingredient name reveal
                 _text_clip(ingredient["name"], 0.5, 5.0, style="chunk", size="x-large",
@@ -250,11 +241,10 @@ def generate_ingredient_spotlight_video(ingredient: dict, audio_url: str, dog_vi
 
 def generate_social_proof_video(quote: str, product_title: str,
                                  audio_url: str, dog_video_url: str) -> str:
-    """Animated customer review with dog footage and voiceover."""
+    """Animated customer review with voiceover on dark background."""
     duration = 17.0
     timeline = {
         "tracks": [
-            {"clips": [_bg_clip(dog_video_url, duration, effect="zoomIn", filter_="muted")]},
             {"clips": [
                 _text_clip("Real dog owners. Real results. 🐾", 0.5, 4.0,
                            style="chunk", size="large", bg="#000000", position="center",
