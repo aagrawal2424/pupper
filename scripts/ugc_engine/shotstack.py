@@ -28,8 +28,12 @@ def _post(path: str, body: dict) -> dict:
         headers={"x-api-key": SHOTSTACK_KEY, "Content-Type": "application/json"},
         method="POST",
     )
-    with urllib.request.urlopen(req) as r:
-        return json.loads(r.read())
+    try:
+        with urllib.request.urlopen(req) as r:
+            return json.loads(r.read())
+    except urllib.error.HTTPError as e:
+        body_text = e.read().decode()
+        raise RuntimeError(f"Shotstack {e.code}: {body_text}")
 
 
 def _get(path: str) -> dict:
