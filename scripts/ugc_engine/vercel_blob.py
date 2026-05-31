@@ -1,26 +1,27 @@
-"""Upload bytes to Vercel Blob for temporary public hosting (used by Shotstack)."""
+"""Temporary public audio hosting via file.io — no setup required."""
 import json
-import urllib.parse
 import urllib.request
-from . import config
 
 
 def upload(filename: str, data: bytes, content_type: str = "audio/mpeg") -> str:
-    if not config.VERCEL_BLOB_TOKEN:
-        raise RuntimeError("BLOB_READ_WRITE_TOKEN not set")
+    """Upload audio bytes, return a public URL valid for 30 minutes."""
+    boundary = "pupper_audio_boundary"
+    body = (
+        f"--{boundary}\r\n"
+        f'Content-Disposition: form-data; name="file"; filename="{filename}"\r\n'
+        f"Content-Type: {content_type}\r\n\r\n"
+    ).encode() + data + f"\r\n--{boundary}--\r\n".encode()
+
     req = urllib.request.Request(
-        f"https://blob.vercel-storage.com/{urllib.parse.quote(filename)}",
-        data=data,
-        headers={
-            "Authorization": f"Bearer {config.VERCEL_BLOB_TOKEN}",
-            "Content-Type": content_type,
-            "x-add-random-suffix": "1",
-        },
-        method="PUT",
+        "https://file.io/?expires=30m&maxdownloads=10",
+        data=body,
+        headers={"Content-Type": f"multipart/form-data; boundary={boundary}"},
+        method="POST",
     )
-    try:
-        with urllib.request.urlopen(req) as r:
-            return json.loads(r.read())["url"]
-    except urllib.error.HTTPError as e:
-        body = e.read().decode()
-        raise RuntimeError(f"Vercel Blob {e.code}: {body}")
+    with urllib.request.urlopen(req) as r:
+        result = json.loads(r.read())
+
+    if not result.get("success"):
+        raise RuntimeError(f"file.io upload failed: {result}")
+
+    return result["link"]
