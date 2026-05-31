@@ -30,8 +30,11 @@ def post_instagram(video_url: str, caption: str) -> str:
         "share_to_feed": "true",
     }).encode()
     req = urllib.request.Request(f"{base}/{ig_id}/media", data=data, method="POST")
-    with urllib.request.urlopen(req) as r:
-        container_id = json.loads(r.read())["id"]
+    try:
+        with urllib.request.urlopen(req) as r:
+            container_id = json.loads(r.read())["id"]
+    except urllib.error.HTTPError as e:
+        raise RuntimeError(f"Instagram container error {e.code}: {e.read().decode()}")
 
     # Step 2: poll until container ready
     for _ in range(60):
