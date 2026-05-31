@@ -1,6 +1,6 @@
 """
 Generate short-form 9:16 videos via Shotstack API.
-Combines Pexels dog stock footage + product image + text overlay + music.
+Combines Pexels dog stock footage, product images, text overlays, music, and optional voiceover.
 """
 import json
 import os
@@ -8,7 +8,17 @@ import time
 import urllib.request
 
 SHOTSTACK_KEY = os.environ.get("SHOTSTACK_API_KEY", "")
-SHOTSTACK_BASE = "https://api.shotstack.io/stage/v1"  # use 'v1' for prod
+SHOTSTACK_BASE = "https://api.shotstack.io/v1"
+
+OUTPUT_BASE = {
+    "format": "mp4",
+    "resolution": "sd",
+    "aspectRatio": "9:16",
+    "fps": 30,
+}
+
+MUSIC_URL = "https://shotstack-assets.s3.ap-southeast-2.amazonaws.com/music/freepd/music.mp3"
+UPBEAT_URL = "https://shotstack-assets.s3.ap-southeast-2.amazonaws.com/music/freepd/positive.mp3"
 
 
 def _post(path: str, body: dict) -> dict:
@@ -44,127 +54,222 @@ def _poll(render_id: str, timeout: int = 300) -> str:
     raise TimeoutError("Shotstack render timed out")
 
 
-def _music_track() -> dict:
-    """Royalty-free upbeat background music."""
+def _render(timeline: dict) -> str:
+    resp = _post("/render", {"timeline": timeline, "output": OUTPUT_BASE})
+    return _poll(resp["response"]["id"])
+
+
+def _bg_clip(src: str, length: float, effect: str = "zoomIn", filter_: str = "contrast") -> dict:
     return {
-        "src": "https://shotstack-assets.s3.ap-southeast-2.amazonaws.com/music/freepd/music.mp3",
-        "effect": "fadeInFadeOut",
-        "volume": 0.15,
+        "asset": {"type": "video", "src": src, "volume": 0},
+        "start": 0,
+        "length": length,
+        "effect": effect,
+        "filter": filter_,
     }
 
+
+def _text_clip(text: str, start: float, length: float, style: str = "chunk",
+               size: str = "large", color: str = "#ffffff",
+               bg: str = "#000000", position: str = "center",
+               transition_in: str = "fadeIn", transition_out: str = "fadeOut") -> dict:
+    return {
+        "asset": {
+            "type": "title",
+            "text": text,
+            "style": style,
+            "color": color,
+            "size": size,
+            "background": bg,
+            "position": position,
+        },
+        "start": start,
+        "length": length,
+        "transition": {"in": transition_in, "out": transition_out},
+    }
+
+
+def _audio_clip(src: str, length: float, volume: float = 1.0) -> dict:
+    return {
+        "asset": {"type": "audio", "src": src, "volume": volume},
+        "start": 0,
+        "length": length,
+    }
+
+
+# ── Existing templates (unchanged) ────────────────────────────────────────────
 
 def generate_tip_video(headline: str, subtext: str, dog_video_url: str) -> str:
-    """Dog health tip: stock footage + bold text overlay."""
     timeline = {
-        "soundtrack": _music_track(),
+        "soundtrack": {"src": MUSIC_URL, "effect": "fadeInFadeOut", "volume": 0.15},
         "tracks": [
-            {
-                "clips": [{
-                    "asset": {"type": "video", "src": dog_video_url, "volume": 0},
-                    "start": 0, "length": 10,
-                    "effect": "zoomIn",
-                    "filter": "contrast",
-                }]
-            },
-            {
-                "clips": [
-                    {
-                        "asset": {
-                            "type": "title",
-                            "text": headline,
-                            "style": "chunk",
-                            "color": "#ffffff",
-                            "size": "x-large",
-                            "background": "#000000",
-                            "position": "center",
-                        },
-                        "start": 0.5, "length": 4,
-                        "transition": {"in": "fadeIn", "out": "fadeOut"},
-                    },
-                    {
-                        "asset": {
-                            "type": "title",
-                            "text": subtext,
-                            "style": "chunk",
-                            "color": "#ffffff",
-                            "size": "medium",
-                            "background": "rgba(0,0,0,0.6)",
-                            "position": "center",
-                        },
-                        "start": 4.5, "length": 5,
-                        "transition": {"in": "fadeIn", "out": "fadeOut"},
-                    },
-                ]
-            },
+            {"clips": [_bg_clip(dog_video_url, 10)]},
+            {"clips": [
+                _text_clip(headline, 0.5, 4, size="x-large"),
+                _text_clip(subtext, 4.5, 5, size="medium", bg="rgba(0,0,0,0.6)"),
+            ]},
         ],
     }
-    output = {
-        "format": "mp4",
-        "resolution": "sd",
-        "aspectRatio": "9:16",
-        "fps": 30,
-    }
-    resp = _post("/render", {"timeline": timeline, "output": output})
-    render_id = resp["response"]["id"]
-    return _poll(render_id)
+    return _render(timeline)
 
 
 def generate_product_video(product_title: str, benefit: str, product_img_url: str, dog_video_url: str) -> str:
-    """Product spotlight: dog stock bg + product image + text."""
     timeline = {
-        "soundtrack": _music_track(),
+        "soundtrack": {"src": MUSIC_URL, "effect": "fadeInFadeOut", "volume": 0.15},
         "tracks": [
-            {
-                "clips": [{
-                    "asset": {"type": "video", "src": dog_video_url, "volume": 0},
-                    "start": 0, "length": 12,
-                    "effect": "slideLeft",
-                    "filter": "muted",
-                }]
-            },
-            {
-                "clips": [{
-                    "asset": {
-                        "type": "image",
-                        "src": product_img_url,
-                    },
-                    "start": 1, "length": 10,
-                    "position": "center",
-                    "scale": 0.55,
-                    "transition": {"in": "slideUp", "out": "fadeOut"},
-                }]
-            },
-            {
-                "clips": [
-                    {
-                        "asset": {
-                            "type": "title",
-                            "text": product_title,
-                            "style": "chunk",
-                            "color": "#ffffff",
-                            "size": "large",
-                            "background": "#000000",
-                            "position": "top",
-                        },
-                        "start": 1.5, "length": 10,
-                    },
-                    {
-                        "asset": {
-                            "type": "title",
-                            "text": benefit + "\n\nLink in bio 🐾",
-                            "style": "chunk",
-                            "color": "#ffffff",
-                            "size": "small",
-                            "background": "rgba(0,0,0,0.7)",
-                            "position": "bottom",
-                        },
-                        "start": 3, "length": 8,
-                        "transition": {"in": "fadeIn"},
-                    },
-                ]
-            },
+            {"clips": [_bg_clip(dog_video_url, 12, effect="slideLeft", filter_="muted")]},
+            {"clips": [{
+                "asset": {"type": "image", "src": product_img_url},
+                "start": 1, "length": 10,
+                "position": "center", "scale": 0.55,
+                "transition": {"in": "slideUp", "out": "fadeOut"},
+            }]},
+            {"clips": [
+                _text_clip(product_title, 1.5, 10, size="large", position="top"),
+                _text_clip(benefit + "\n\nLink in bio 🐾", 3, 8, size="small",
+                           bg="rgba(0,0,0,0.7)", position="bottom"),
+            ]},
         ],
     }
-    output = {"format": "mp4", "resolution": "sd", "aspectRatio": "9:16", "fps": 30}
-    resp = _post("/render", {"timeline": timeline, "output": output})
-    return _poll(resp["response"]["id"])
+    return _render(timeline)
+
+
+# ── New templates ──────────────────────────────────────────────────────────────
+
+def generate_voiceover_tip_video(tip: dict, audio_url: str, dog_video_url: str) -> str:
+    """Narrated dog health tip — ElevenLabs voiceover over Pexels footage with text sync."""
+    duration = 21.0
+    timeline = {
+        "soundtrack": {"src": MUSIC_URL, "effect": "fadeInFadeOut", "volume": 0.05},
+        "tracks": [
+            # Background video
+            {"clips": [_bg_clip(dog_video_url, duration, effect="zoomIn", filter_="contrast")]},
+            # Text overlays synced to narration pacing
+            {"clips": [
+                _text_clip(tip["hook"], 0.5, 6.0, style="chunk", size="x-large",
+                           position="center", transition_in="fadeIn", transition_out="fadeOut"),
+                _text_clip(tip["body"], 6.5, 11.0, style="subtitle", size="small",
+                           color="#ffffff", bg="rgba(0,0,0,0.75)", position="bottom",
+                           transition_in="fadeIn", transition_out="fadeOut"),
+                _text_clip("pupper.com 🐾", 18.5, 2.0, style="chunk", size="medium",
+                           bg="rgba(0,0,0,0.9)", position="center",
+                           transition_in="fadeIn", transition_out="fadeOut"),
+            ]},
+            # Voiceover audio
+            {"clips": [_audio_clip(audio_url, duration)]},
+        ],
+    }
+    return _render(timeline)
+
+
+def generate_product_story_video(product_title: str, benefit: str, product_img_url: str,
+                                  audio_url: str, dog_video_url: str) -> str:
+    """Product deep-dive with ElevenLabs narration, product image, and dog footage."""
+    duration = 22.0
+    timeline = {
+        "soundtrack": {"src": MUSIC_URL, "effect": "fadeInFadeOut", "volume": 0.05},
+        "tracks": [
+            {"clips": [_bg_clip(dog_video_url, duration, effect="slideLeft", filter_="muted")]},
+            # Product image — slides in and holds center stage
+            {"clips": [{
+                "asset": {"type": "image", "src": product_img_url},
+                "start": 4.0, "length": 14.0,
+                "position": "center", "scale": 0.5,
+                "transition": {"in": "slideUp", "out": "fadeOut"},
+            }]},
+            {"clips": [
+                _text_clip(product_title, 0.5, 5.0, style="chunk", size="x-large",
+                           position="center", transition_in="fadeIn"),
+                _text_clip(benefit, 4.5, 13.0, style="subtitle", size="small",
+                           color="#ffffff", bg="rgba(0,0,0,0.8)", position="bottom",
+                           transition_in="fadeIn", transition_out="fadeOut"),
+                _text_clip("Link in bio 🐾  pupper.com", 19.0, 2.5, style="chunk",
+                           size="medium", bg="rgba(0,0,0,0.9)", position="center",
+                           transition_in="fadeIn", transition_out="fadeOut"),
+            ]},
+            {"clips": [_audio_clip(audio_url, duration)]},
+        ],
+    }
+    return _render(timeline)
+
+
+def generate_relatable_reel(moment: dict, dog_video_url: str) -> str:
+    """Text-on-screen relatable dog parent moment — no voiceover, upbeat music."""
+    lines = moment["lines"]
+    duration = 13.0
+    segment = duration / len(lines)
+
+    text_clips = []
+    for i, line in enumerate(lines):
+        start = i * segment + 0.3
+        length = segment - 0.6
+        text_clips.append(
+            _text_clip(line, start, length, style="chunk", size="large",
+                       color="#ffffff", bg="rgba(0,0,0,0.85)", position="center",
+                       transition_in="fadeIn", transition_out="fadeOut")
+        )
+
+    timeline = {
+        "soundtrack": {"src": UPBEAT_URL, "effect": "fadeInFadeOut", "volume": 0.4},
+        "tracks": [
+            {"clips": [_bg_clip(dog_video_url, duration, effect="zoomIn", filter_="contrast")]},
+            {"clips": text_clips},
+        ],
+    }
+    return _render(timeline)
+
+
+def generate_ingredient_spotlight_video(ingredient: dict, audio_url: str, dog_video_url: str) -> str:
+    """Hero ingredient education — name reveal, benefit, science fact, CTA, with narration."""
+    duration = 22.0
+    timeline = {
+        "soundtrack": {"src": MUSIC_URL, "effect": "fadeInFadeOut", "volume": 0.05},
+        "tracks": [
+            {"clips": [_bg_clip(dog_video_url, duration, effect="zoomIn", filter_="muted")]},
+            {"clips": [
+                # Big ingredient name reveal
+                _text_clip(ingredient["name"], 0.5, 5.0, style="chunk", size="x-large",
+                           color="#ffffff", bg="#000000", position="center",
+                           transition_in="fadeIn", transition_out="fadeOut"),
+                # Benefit
+                _text_clip(ingredient["benefit"], 5.5, 6.0, style="chunk", size="medium",
+                           color="#ffffff", bg="rgba(0,0,0,0.8)", position="center",
+                           transition_in="fadeIn", transition_out="fadeOut"),
+                # Science fact
+                _text_clip(f"🔬 {ingredient['fact']}", 11.5, 6.5, style="subtitle", size="small",
+                           color="#ffffff", bg="rgba(0,0,0,0.85)", position="bottom",
+                           transition_in="fadeIn", transition_out="fadeOut"),
+                # CTA
+                _text_clip(ingredient["cta"], 18.5, 3.0, style="chunk", size="small",
+                           color="#ffffff", bg="#000000", position="center",
+                           transition_in="fadeIn", transition_out="fadeOut"),
+            ]},
+            {"clips": [_audio_clip(audio_url, duration)]},
+        ],
+    }
+    return _render(timeline)
+
+
+def generate_social_proof_video(quote: str, product_title: str,
+                                 audio_url: str, dog_video_url: str) -> str:
+    """Animated customer review with dog footage and voiceover."""
+    duration = 17.0
+    timeline = {
+        "soundtrack": {"src": MUSIC_URL, "effect": "fadeInFadeOut", "volume": 0.05},
+        "tracks": [
+            {"clips": [_bg_clip(dog_video_url, duration, effect="zoomIn", filter_="muted")]},
+            {"clips": [
+                _text_clip("Real dog owners. Real results. 🐾", 0.5, 4.0,
+                           style="chunk", size="large", bg="#000000", position="center",
+                           transition_in="fadeIn", transition_out="fadeOut"),
+                _text_clip(f'"{quote}"', 4.5, 9.0, style="subtitle", size="small",
+                           color="#ffffff", bg="rgba(0,0,0,0.85)", position="center",
+                           transition_in="fadeIn", transition_out="fadeOut"),
+                _text_clip(f"{product_title}\npupper.com 🐾", 14.0, 2.5,
+                           style="chunk", size="medium", bg="#000000", position="center",
+                           transition_in="fadeIn", transition_out="fadeOut"),
+            ]},
+            {"clips": [_audio_clip(audio_url, duration)]},
+        ],
+    }
+    return _render(timeline)
