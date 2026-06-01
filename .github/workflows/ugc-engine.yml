@@ -14,6 +14,12 @@ on:
         default: "daily"
         type: choice
         options: [daily, brief]
+      content_type:
+        description: "Override content type (leave blank for auto)"
+        required: false
+        default: ""
+        type: choice
+        options: ["", "ugc", "voiceover_tip", "product_story", "relatable_reel", "ingredient_spotlight", "social_proof"]
 
 permissions:
   contents: write
@@ -63,5 +69,5 @@ jobs:
           INSTAGRAM_ACCOUNT_ID: ${{ secrets.INSTAGRAM_ACCOUNT_ID }}
           TIKTOK_ACCESS_TOKEN: ${{ secrets.TIKTOK_ACCESS_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: python -m ugc_engine.main daily
+        run: python -m ugc_engine.main daily ${{ github.event.inputs.content_type }}
         working-directory: scripts

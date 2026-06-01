@@ -260,9 +260,9 @@ HANDLERS = {
 }
 
 
-def run_daily() -> None:
+def run_daily(override_type: str = None) -> None:
     print(f"=== Pupper Daily Post — {datetime.utcnow().strftime('%A %Y-%m-%d')} ===")
-    content_type = scheduler.today_content_type()
+    content_type = override_type if override_type else scheduler.today_content_type()
     print(f"Content type: {content_type}")
 
     with tempfile.NamedTemporaryFile(suffix=".mp4", delete=False) as tmp:
@@ -302,9 +302,10 @@ def run_brief() -> None:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("mode", nargs="?", default="daily", choices=["daily", "brief"])
+    parser.add_argument("content_type", nargs="?", default="")
     args = parser.parse_args()
 
     if args.mode == "brief":
         run_brief()
     else:
-        run_daily()
+        run_daily(args.content_type or None)
