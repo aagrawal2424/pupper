@@ -10,54 +10,40 @@ import urllib.request
 from . import config
 
 
-# ── Instagram + Facebook (Meta Graph API) ─────────────────────────────────────
+# ── Instagram via Ayrshare ─────────────────────────────────────────────────────
 
 def post_instagram(video_url: str, caption: str) -> str:
-    if not config.META_PAGE_ACCESS_TOKEN or not config.INSTAGRAM_ACCOUNT_ID:
-        print("  Instagram: skipped (no credentials)")
+    if not config.AYRSHARE_API_KEY:
+        print("  Instagram: skipped (no AYRSHARE_API_KEY)")
         return ""
 
-    base = "https://graph.facebook.com/v20.0"
-    tok = config.META_PAGE_ACCESS_TOKEN
-    ig_id = config.INSTAGRAM_ACCOUNT_ID
-
-    # Step 1: create container
-    data = urllib.parse.urlencode({
-        "media_type": "REELS",
-        "video_url": video_url,
-        "caption": caption,
-        "share_to_feed": "true",
+    payload = json.dumps({
+        "post": caption,
+        "platforms": ["instagram"],
+        "instagramOptions": {
+            "reelVideoUrl": video_url,
+            "shareReelsFeed": True,
+        },
     }).encode()
-    req = urllib.request.Request(f"{base}/{ig_id}/media", data=data, method="POST")
-    req.add_header("Authorization", f"Bearer {tok}")
+
+    req = urllib.request.Request(
+        "https://app.ayrshare.com/api/post",
+        data=payload,
+        headers={
+            "Authorization": f"Bearer {config.AYRSHARE_API_KEY}",
+            "Content-Type": "application/json",
+        },
+        method="POST",
+    )
     try:
         with urllib.request.urlopen(req) as r:
-            container_id = json.loads(r.read())["id"]
+            result = json.loads(r.read())
+        post_ids = result.get("postIds", [{}])
+        post_id = post_ids[0].get("id", result.get("id", "ok")) if post_ids else result.get("id", "ok")
+        print(f"  Instagram: posted {post_id}")
+        return str(post_id)
     except urllib.error.HTTPError as e:
-        raise RuntimeError(f"Instagram container error {e.code}: {e.read().decode()}")
-
-    # Step 2: poll until container ready
-    for _ in range(60):
-        time.sleep(5)
-        check = urllib.parse.urlencode({"fields": "status_code"})
-        req = urllib.request.Request(f"{base}/{container_id}?{check}")
-        req.add_header("Authorization", f"Bearer {tok}")
-        with urllib.request.urlopen(req) as r:
-            status = json.loads(r.read()).get("status_code", "")
-        if status == "FINISHED":
-            break
-        if status == "ERROR":
-            raise RuntimeError("Instagram container processing failed")
-
-    # Step 3: publish
-    data = urllib.parse.urlencode({"creation_id": container_id}).encode()
-    req = urllib.request.Request(f"{base}/{ig_id}/media_publish", data=data, method="POST")
-    req.add_header("Authorization", f"Bearer {tok}")
-    with urllib.request.urlopen(req) as r:
-        post_id = json.loads(r.read())["id"]
-
-    print(f"  Instagram: posted {post_id}")
-    return post_id
+        raise RuntimeError(f"Ayrshare error {e.code}: {e.read().decode()}")
 
 
 def post_facebook(video_path: str, caption: str) -> str:

@@ -8,6 +8,7 @@ RESEND_API_KEY = os.environ.get("RESEND_API_KEY", "")
 BILLO_API_KEY = os.environ.get("BILLO_API_KEY", "")
 ELEVENLABS_API_KEY = os.environ.get("ELEVENLABS_API_KEY", "")
 ELEVENLABS_VOICE_ID = os.environ.get("ELEVENLABS_VOICE_ID", "EXAVITQu4vr4xnSDxMaL")  # Bella — warm, trustworthy
+AYRSHARE_API_KEY = os.environ.get("AYRSHARE_API_KEY", "")
 
 VERCEL_BLOB_TOKEN = os.environ.get("BLOB_READ_WRITE_TOKEN", "")
 
