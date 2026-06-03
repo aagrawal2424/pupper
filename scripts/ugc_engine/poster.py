@@ -26,13 +26,10 @@ def post_instagram(video_url: str, caption: str) -> str:
         "media_type": "REELS",
         "video_url": video_url,
         "caption": caption,
-        "access_token": tok,
         "share_to_feed": "true",
     }).encode()
-    req = urllib.request.Request(
-        f"{base}/{ig_id}/media?access_token={urllib.parse.quote(tok)}",
-        data=data, method="POST"
-    )
+    req = urllib.request.Request(f"{base}/{ig_id}/media", data=data, method="POST")
+    req.add_header("Authorization", f"Bearer {tok}")
     try:
         with urllib.request.urlopen(req) as r:
             container_id = json.loads(r.read())["id"]
@@ -42,8 +39,9 @@ def post_instagram(video_url: str, caption: str) -> str:
     # Step 2: poll until container ready
     for _ in range(60):
         time.sleep(5)
-        check = urllib.parse.urlencode({"fields": "status_code", "access_token": tok})
+        check = urllib.parse.urlencode({"fields": "status_code"})
         req = urllib.request.Request(f"{base}/{container_id}?{check}")
+        req.add_header("Authorization", f"Bearer {tok}")
         with urllib.request.urlopen(req) as r:
             status = json.loads(r.read()).get("status_code", "")
         if status == "FINISHED":
@@ -52,8 +50,9 @@ def post_instagram(video_url: str, caption: str) -> str:
             raise RuntimeError("Instagram container processing failed")
 
     # Step 3: publish
-    data = urllib.parse.urlencode({"creation_id": container_id, "access_token": tok}).encode()
+    data = urllib.parse.urlencode({"creation_id": container_id}).encode()
     req = urllib.request.Request(f"{base}/{ig_id}/media_publish", data=data, method="POST")
+    req.add_header("Authorization", f"Bearer {tok}")
     with urllib.request.urlopen(req) as r:
         post_id = json.loads(r.read())["id"]
 
