@@ -17,7 +17,7 @@ def post_instagram(video_url: str, caption: str) -> str:
         print("  Instagram: skipped (no credentials)")
         return ""
 
-    base = "https://graph.facebook.com/v19.0"
+    base = "https://graph.facebook.com/v20.0"
     tok = config.META_PAGE_ACCESS_TOKEN
     ig_id = config.INSTAGRAM_ACCOUNT_ID
 
@@ -29,7 +29,10 @@ def post_instagram(video_url: str, caption: str) -> str:
         "access_token": tok,
         "share_to_feed": "true",
     }).encode()
-    req = urllib.request.Request(f"{base}/{ig_id}/media", data=data, method="POST")
+    req = urllib.request.Request(
+        f"{base}/{ig_id}/media?access_token={urllib.parse.quote(tok)}",
+        data=data, method="POST"
+    )
     try:
         with urllib.request.urlopen(req) as r:
             container_id = json.loads(r.read())["id"]
@@ -63,7 +66,7 @@ def post_facebook(video_path: str, caption: str) -> str:
         print("  Facebook: skipped (no credentials)")
         return ""
 
-    base = "https://graph.facebook.com/v19.0"
+    base = "https://graph.facebook.com/v20.0"
     tok = config.META_PAGE_ACCESS_TOKEN
     page_id = config.META_PAGE_ID
 
