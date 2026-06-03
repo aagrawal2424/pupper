@@ -10,40 +10,52 @@ import urllib.request
 from . import config
 
 
-# ── Instagram via Ayrshare ─────────────────────────────────────────────────────
+# ── Instagram via Buffer ───────────────────────────────────────────────────────
+
+def _get_buffer_instagram_profile(tok: str) -> str:
+    req = urllib.request.Request(
+        f"https://api.bufferapp.com/1/profiles.json?access_token={tok}"
+    )
+    with urllib.request.urlopen(req) as r:
+        profiles = json.loads(r.read())
+    for p in profiles:
+        if p.get("service") == "instagram":
+            return p["id"]
+    raise RuntimeError("No Instagram profile found in Buffer account")
+
 
 def post_instagram(video_url: str, caption: str) -> str:
     if not config.AYRSHARE_API_KEY:
         print("  Instagram: skipped (no AYRSHARE_API_KEY)")
         return ""
 
-    payload = json.dumps({
-        "post": caption,
-        "platforms": ["instagram"],
-        "instagramOptions": {
-            "reelVideoUrl": video_url,
-            "shareReelsFeed": True,
-        },
+    tok = config.AYRSHARE_API_KEY
+    try:
+        profile_id = _get_buffer_instagram_profile(tok)
+    except Exception as e:
+        raise RuntimeError(f"Buffer profile lookup failed: {e}")
+
+    data = urllib.parse.urlencode({
+        "profile_ids[]": profile_id,
+        "text": caption,
+        "media[video]": video_url,
+        "access_token": tok,
+        "now": "true",
     }).encode()
 
     req = urllib.request.Request(
-        "https://app.ayrshare.com/api/post",
-        data=payload,
-        headers={
-            "Authorization": f"Bearer {config.AYRSHARE_API_KEY}",
-            "Content-Type": "application/json",
-        },
+        "https://api.bufferapp.com/1/updates/create.json",
+        data=data,
         method="POST",
     )
     try:
         with urllib.request.urlopen(req) as r:
             result = json.loads(r.read())
-        post_ids = result.get("postIds", [{}])
-        post_id = post_ids[0].get("id", result.get("id", "ok")) if post_ids else result.get("id", "ok")
+        post_id = result.get("updates", [{}])[0].get("id", "ok")
         print(f"  Instagram: posted {post_id}")
         return str(post_id)
     except urllib.error.HTTPError as e:
-        raise RuntimeError(f"Ayrshare error {e.code}: {e.read().decode()}")
+        raise RuntimeError(f"Buffer error {e.code}: {e.read().decode()}")
 
 
 def post_facebook(video_path: str, caption: str) -> str:
